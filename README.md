@@ -25,7 +25,7 @@ This project aims to provide a free and open-source platform for churches and no
 
 ## Tech Stack
 
-*   **Frontend:** React, TypeScript, HTML, CSS, JavaScript
+*   **Frontend:** React, JavaScript, HTML, CSS,
 *   **Backend:** Python, Flask
 *   **Database:** PostgreSQL, AWS RDS
 *   **Cloud Platform:** AWS (S3, Lambda, API Gateway, Cognito)
@@ -53,6 +53,13 @@ This project aims to provide a free and open-source platform for churches and no
 1.  Build the React app: `npm run build` or `yarn build` (in the frontend directory)
 2.  Upload the contents of the `build` directory to your S3 bucket.
 3.  Configure API Gateway to route requests to your Lambda functions.
+
+### Running the Development Server
+
+```bash
+cd frontend  # Navigate to the frontend directory
+npm start    # Start the development server
+```
 
 ## Contributing
 

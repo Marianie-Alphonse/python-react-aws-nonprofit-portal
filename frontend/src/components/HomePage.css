@@ -1,0 +1,46 @@
+/* HomePage.css */
+.home-page {
+    display: flex;
+    flex-direction: column; /* Tabs on top, content below */
+    min-height: 100vh; /* Ensure full viewport height */
+    margin: 0; /* Remove default margins */
+  }
+  
+  .tabs {
+    display: flex;
+    justify-content: center; /* Center the tabs */
+    border-bottom: 1px solid #ccc; /* Add a bottom border */
+    padding: 10px;
+  }
+  
+  .tab {
+    padding: 10px 20px;
+    margin: 0 5px;
+    text-decoration: none; /* Remove underlines from links */
+    color: #333; /* Set default text color */
+    border: none; /* Remove default border */
+    background: none; /* Remove default background */
+    cursor: pointer;
+    border-radius: 5px 5px 0 0; /* Rounded top corners */
+  }
+  
+  .tab:hover {
+    background-color: #eee; /* Add hover background color */
+  }
+  
+  .tab.active {
+    background-color: #ddd; /* Highlight active tab */
+    font-weight: bold;
+  }
+  
+  /* Add styles for your page content here */
+  .page-content {
+    padding: 20px;
+    flex-grow: 1; /* Allow content to fill remaining space */
+  }
+  
+  /* Optional: Style the Link components as buttons */
+  .tab { /* Reusing the .tab class */
+    display: inline-block; /* Make the link behave like a block element */
+    /* Other button styles as needed */
+  }
