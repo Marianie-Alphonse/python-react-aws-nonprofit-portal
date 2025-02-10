@@ -36,8 +36,7 @@ This project aims to provide a free and open-source platform for churches and no
 ### Prerequisites
 
 *   Node.js and npm (or yarn) for the frontend
-*   Python 3.x for the backend
-*   pip (Python package installer)
+*   Python 3.13 for the backend
 *   AWS CLI configured with your credentials
 *   Git
 
