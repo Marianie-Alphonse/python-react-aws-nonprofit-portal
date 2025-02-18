@@ -1,0 +1,221 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-user-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column: { name: user_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: first_name, type: varchar(255) }
+              - column: { name: last_name, type: varchar(255) }
+              - column: { name: email, type: varchar(255), constraints: { unique: true } }
+  - changeSet:
+      id: create-user-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: users_audit
+            columns:
+              - column: { name: audit_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: user_id, type: uuid, constraints: { foreignKey: true, references: users(user_id) } }
+              - column: { name: first_name, type: varchar(255) }
+              - column: { name: last_name, type: varchar(255) }
+              - column: { name: email, type: varchar(255) }
+              - column: { name: audit_timestamp, type: timestamptz, defaultValueComputed: now() }
+              - column: { name: audit_action, type: varchar(255) } # e.g., 'INSERT', 'UPDATE', 'DELETE'
+              - column: { name: audit_user, type: varchar(255) } # Who performed the audit action
+  - changeSet:
+      id: insert-dummy-users
+      author: malphonse
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: user_id, value: uuid_generate_v4() } # Generate UUIDs
+              - column: { name: first_name, value: "User" }
+              - column: { name: last_name, value: i } # Use a loop or counter for last name
+              - column: { name: email, value: "user${i}@example.com" } # Use a loop or counter for email
+            count: 15 # Insert 15 dummy users
+  - changeSet:
+      id: create-role-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column: { name: role_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: role_display_name, type: varchar(255) }
+              - column: { name: role_key_name, type: varchar(255), constraints: { unique: true } }
+              - column: { name: role_description, type: text }
+  - changeSet:
+      id: create-role-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: roles_audit
+            columns:
+              - column: { name: audit_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: role_id, type: uuid, constraints: { foreignKey: true, references: roles(role_id) } }
+              - column: { name: role_display_name, type: varchar(255) }
+              - column: { name: role_key_name, type: varchar(255) }
+              - column: { name: role_description, type: text }
+              - column: { name: audit_timestamp, type: timestamptz, defaultValueComputed: now() }
+              - column: { name: audit_action, type: varchar(255) }
+              - column: { name: audit_user, type: varchar(255) }
+  - changeSet:
+      id: insert-roles
+      author: malphonse
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column: { name: role_id, value: uuid_generate_v4() }
+              - column: { name: role_display_name, value: "Admin" }
+              - column: { name: role_key_name, value: "admin" }
+              - column: { name: role_description, value: "Full Access" }
+        - insert:
+            tableName: roles
+            columns:
+              - column: { name: role_id, value: uuid_generate_v4() }
+              - column: { name: role_display_name, value: "Member" }
+              - column: { name: role_key_name, value: "member" }
+              - column: { name: role_description, value: "Basic Access" }
+        - insert:
+            tableName: roles
+            columns:
+              - column: { name: role_id, value: uuid_generate_v4() }
+              - column: { name: role_display_name, value: "Manager" }
+              - column: { name: role_key_name, value: "manager" }
+              - column: { name: role_description, value: Manager Access" }
+  - changeSet:
+      id: create-user-role-join-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: user_role
+            columns:
+              - column: { name: user_id, type: uuid, constraints: { foreignKey: true, references: users(user_id) } }
+              - column: { name: role_id, type: uuid, constraints: { foreignKey: true, references: roles(role_id) } }
+  - changeSet:
+      id: create-user-role-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: user_role_audit
+            columns:
+              - column: { name: audit_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: user_id, type: uuid }
+              - column: { name: role_id, type: uuid }
+              - column: { name: audit_timestamp, type: timestamptz, defaultValueComputed: now() }
+              - column: { name: audit_action, type: varchar(255) }
+              - column: { name: audit_user, type: varchar(255) }
+  - changeSet:
+      id: insert-user-roles
+      author: malphonse
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO user_role (user_id, role_id)
+              SELECT user_id, (SELECT role_id FROM roles WHERE role_key_name = 'member')  -- Default role: member
+              FROM users;
+
+              UPDATE user_role
+              SET role_id = (SELECT role_id FROM roles WHERE role_key_name = 'admin')
+              WHERE user_id = (SELECT user_id FROM users LIMIT 1);
+
+              UPDATE user_role
+              SET role_id = (SELECT role_id FROM roles WHERE role_key_name = 'manager')
+              WHERE user_id = (SELECT user_id FROM users OFFSET 1 LIMIT 1);
+  - changeSet:
+      id: create-donations-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: donations
+            columns:
+              - column: { name: donation_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: user_id, type: uuid, constraints: { foreignKey: true, references: users(user_id) } }
+              - column: { name: amount, type: numeric }
+              - column: { name: donation_date, type: timestamptz, defaultValueComputed: now() } # Add donation date
+  - changeSet:
+      id: create-donations-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: donations_audit
+            columns:
+              - column: { name: audit_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: donation_id, type: uuid, constraints: { foreignKey: true, references: donations(donation_id) } }
+              - column: { name: user_id, type: uuid }
+              - column: { name: amount, type: numeric }
+              - column: { name: donation_date, type: timestamptz }
+              - column: { name: audit_timestamp, type: timestamptz, defaultValueComputed: now() }
+              - column: { name: audit_action, type: varchar(255) }
+              - column: { name: audit_user, type: varchar(255) }
+  - changeSet:
+      id: insert-dummy-donations
+      author: malphonse
+      changes:
+        - insert:
+            tableName: donations
+            columns:
+              - column: { name: donation_id, value: uuid_generate_v4() }
+              - column: { name: user_id, value: (SELECT user_id FROM users ORDER BY RANDOM() LIMIT 1) } # Random user
+              - column: { name: amount, value: (RANDOM() * 100)::numeric(10, 2) } # Random amount up to 100
+            count: 50 # Insert 50 dummy donations
+
+
+  - changeSet:
+      id: create-announcements-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: announcements
+            columns:
+              - column: { name: announcement_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: user_id, type: uuid, constraints: { foreignKey: true, references: users(user_id) } }
+              - column: { name: title, type: varchar(255) }
+              - column: { name: content, type: text }
+              - column: { name: announcement_date, type: timestamptz, defaultValueComputed: now() }
+  - changeSet:
+      id: create-announcements-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: announcements_audit
+            columns:
+              - column: { name: audit_id, type: uuid, constraints: { primaryKey: true } }
+              - column: { name: announcement_id, type: uuid, constraints: { foreignKey: true, references: announcements(announcement_id) } }
+              - column: { name: user_id, type: uuid }
+              - column: { name: title, type: varchar(255) }
+              - column: { name: content, type: text }
+              - column: { name: announcement_date, type: timestamptz }
+              - column: { name: audit_timestamp, type: timestamptz, defaultValueComputed: now() }
+              - column: { name: audit_action, type: varchar(255) }
+              - column: { name: audit_user, type: varchar(255) }
+  - changeSet:
+      id: insert-dummy-announcements
+      author: malphonse
+      changes:
+        - insert:
+            tableName: announcements
+            columns:
+              - column: { name: announcement_id, value: uuid_generate_v4() }
+              - column: { name: user_id, value: (SELECT user_id FROM users u JOIN user_role ur ON u.user_id = ur.user_id JOIN roles r ON ur.role_id = r.role_id WHERE r.role_key_name IN ('admin', 'manager') ORDER BY RANDOM() LIMIT 1) }
+              - column: { name: title, value: "Welcomw" }
+              - column: { name: content, value: "Welcome to our nonprofit portal!" }
+        - insert:
+            tableName: announcements
+            columns:
+              - column: { name: announcement_id, value: uuid_generate_v4() }
+              - column: { name: user_id, value: (SELECT user_id FROM users u JOIN user_role ur ON u.user_id = ur.user_id JOIN roles r ON ur.role_id = r.role_id WHERE r.role_key_name IN ('admin', 'manager') ORDER BY RANDOM() LIMIT 1) }
+              - column: { name: title, value: "New Feature" }
+              - column: { name: content, value: "We have added a new feature to our portal!" }
+        - insert:
+            tableName: announcements
+            columns:
+              - column: { name: announcement_id, value: uuid_generate_v4() }
+              - column: { name: user_id, value: (SELECT user_id FROM users u JOIN user_role ur ON u.user_id = ur.user_id JOIN roles r ON ur.role_id = r.role_id WHERE r.role_key_name IN ('admin', 'manager') ORDER BY RANDOM() LIMIT 1) }
+              - column: { name: title, value: "Upcoming Event" }
+              - column: { name: content, value: "Join us for our upcoming event!" }
