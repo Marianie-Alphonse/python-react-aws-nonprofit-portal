@@ -42,7 +42,7 @@ This project aims to provide a free and open-source platform for churches and no
 
 ### Installation
 
-1.  Clone the repository: `git clone https://github.com/your-username/your-repo-name.git`
+1.  Clone the repository: `git clone https://github.com/Marianie-Alphonse/python-react-aws-nonprofit-portal.git`
 2.  Navigate to the frontend directory: `cd frontend`
 3.  Install frontend dependencies: `npm install` or `yarn install`
 4.  Navigate to the backend directory: `cd backend`
