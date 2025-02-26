@@ -1,18 +1,18 @@
-version: "3.9"  # Or a later version if needed
+version: "3.9"
 
 services:
   db:
-    image: postgres:latest  # Or a specific PostgreSQL version if required
+    image: postgres:latest
     container_name: community-hub-db
     ports:
-      - "5432:5432"  # Map container port 5432 to your localhost 5432
+      - "5432:5432"
     environment:
       POSTGRES_USER: community_hub_user
       POSTGRES_PASSWORD: community_hub_password
-      POSTGRES_DB: community_hub # Database name
+      POSTGRES_DB: community_hub
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./liquibase:/liquibase/changelog  # Mount Liquibase changelog directory
+      - ./liquibase:/liquibase/changelog
 
   frontend:
     build:
@@ -20,34 +20,32 @@ services:
       dockerfile: Dockerfile
     container_name: community-hub-frontend
     ports:
-      - "3000:3000"  # Map container port 3000 to your localhost 3000
+      - "3000:3000"
     depends_on:
-      - db  # Make sure the database container is running before starting the frontend
+      - db
     environment:
       REACT_APP_API_URL: http://backend:8000/api
     volumes:
-        - ./frontend:/app
-        - /app/node_modules
-    stdin_open: true # Keep stdin open so that the process doesn't exit immediately. Required for create-react-app
-    tty: true # Keep tty open so that the process doesn't exit immediately. Required for create-react-app
-    
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    dockerfile: Dockerfile
     container_name: community-hub-backend
     ports:
-      - "8000:8000"  # Map container port 8000 to your localhost 8000
+      - "8000:8000"
     depends_on:
-      - db 
+      - db
     environment:
-      DATABASE_URL: postgres://your_db_user:your_db_password@db:5432/community_hub  # Database connection string
+      DATABASE_URL: postgres://community_hub_user:community_hub_password@db:5432/community_hub
     volumes:
-        - ./backend:/app
-    command: sh -c "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 community_hub.wsgi"
-    
+      - ./backend:/app
+    command: sh -c "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 your_project.wsgi"
+
   liquibase:
     build: ./liquibase
     container_name: community-hub-liquibase
@@ -55,11 +53,11 @@ services:
       - db
     environment:
       LIQUIBASE_URL: jdbc:postgresql://db:5432/community_hub
-      LIQUIBASE_USERNAME: community_hub_user
-      LIQUIBASE_PASSWORD: community_hub_password
+      LIQUIBASE_USERNAME: your_db_user
+      LIQUIBASE_PASSWORD: your_db_password
     volumes:
       - ./liquibase:/liquibase
 
 volumes:
-  db_data:  
+  db_data:
   liquibase_changelog:
