@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:latest
@@ -12,7 +10,6 @@ services:
       POSTGRES_DB: community_hub
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./liquibase:/liquibase/changelog
 
   frontend:
     build:
@@ -44,20 +41,16 @@ services:
       DATABASE_URL: postgres://community_hub_user:community_hub_password@db:5432/community_hub
     volumes:
       - ./backend:/app
-    command: sh -c "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 your_project.wsgi"
+    command: sh -c "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 community_hub.wsgi"
 
   liquibase:
     build: ./liquibase
     container_name: community-hub-liquibase
     depends_on:
       - db
-    environment:
-      LIQUIBASE_URL: jdbc:postgresql://db:5432/community_hub
-      LIQUIBASE_USERNAME: your_db_user
-      LIQUIBASE_PASSWORD: your_db_password
+    command: update --changelog-file=changelog/1.0.0.yaml --username community_hub_user --password community_hub_password --url jdbc:postgresql://db:5432/community_hub
     volumes:
-      - ./liquibase:/liquibase
+      - ./liquibase/changelog:/liquibase/changelog
 
 volumes:
   db_data:
-  liquibase_changelog:

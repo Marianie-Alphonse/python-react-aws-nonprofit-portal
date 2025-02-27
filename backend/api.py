@@ -1,4 +1,4 @@
-rom flask import Flask, jsonify, request
+from flask import Flask, jsonify, request
 import psycopg2  # For PostgreSQL database connection
 import uuid  # For generating UUIDs
 

@@ -1,0 +1,452 @@
+databaseChangeLog:
+  - changeSet:
+      id: install-uuid-ossp-extension
+      author: malphonse
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+  - changeSet:
+      id: create-user-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: first_name
+                  type: varchar(255)
+              - column:
+                  name: last_name
+                  type: varchar(255)
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+  - changeSet:
+      id: create-user-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: users_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_users_audit_user_id
+                    references: users(user_id)
+              - column:
+                  name: first_name
+                  type: varchar(255)
+              - column:
+                  name: last_name
+                  type: varchar(255)
+              - column:
+                  name: email
+                  type: varchar(255)
+              - column:
+                  name: audit_timestamp
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: audit_action
+                  type: varchar(255)
+              - column:
+                  name: audit_user
+                  type: varchar(255)
+  - changeSet:
+      id: insert-dummy-users
+      author: malphonse
+      changes:
+        - sql:
+          sql: |
+            INSERT INTO users (user_id, first_name, last_name, email)
+            SELECT
+              uuid_generate_v4(),
+              'User',
+              i::text,
+              'user' || i::text || '@example.com'
+            FROM generate_series(1, 15) AS i;
+  - changeSet:
+      id: create-role-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: role_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: role_display_name
+                  type: varchar(255)
+              - column:
+                  name: role_key_name
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+              - column:
+                  name: role_description
+                  type: text
+  - changeSet:
+      id: create-role-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: roles_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: role_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_roles_audit_role_id
+                    references: roles(role_id)
+              - column:
+                  name: role_display_name
+                  type: varchar(255)
+              - column:
+                  name: role_key_name
+                  type: varchar(255)
+              - column:
+                  name: role_description
+                  type: text
+              - column:
+                  name: audit_timestamp
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: audit_action
+                  type: varchar(255)
+              - column:
+                  name: audit_user
+                  type: varchar(255)
+  - changeSet:
+      id: insert-roles
+      author: malphonse
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: role_id
+                  valueComputed: "uuid_generate_v4()"
+              - column:
+                  name: role_display_name
+                  value: Admin
+              - column:
+                  name: role_key_name
+                  value: admin
+              - column:
+                  name: role_description
+                  value: Full Access
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: role_id
+                  valueComputed: "uuid_generate_v4()"
+              - column:
+                  name: role_display_name
+                  value: Member
+              - column:
+                  name: role_key_name
+                  value: member
+              - column:
+                  name: role_description
+                  value: Basic Access
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: role_id
+                  valueComputed: "uuid_generate_v4()"
+              - column:
+                  name: role_display_name
+                  value: Manager
+              - column:
+                  name: role_key_name
+                  value: manager
+              - column:
+                  name: role_description
+                  value: Manager Access
+  - changeSet:
+      id: create-user-role-join-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: user_role
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_user_role_user_id
+                    references: users(user_id)
+              - column:
+                  name: role_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_user_role_role_id
+                    references: roles(role_id)
+  - changeSet:
+      id: create-user-role-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: user_role_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: uuid
+              - column:
+                  name: role_id
+                  type: uuid
+              - column:
+                  name: audit_timestamp
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: audit_action
+                  type: varchar(255)
+              - column:
+                  name: audit_user
+                  type: varchar(255)
+  - changeSet:
+      id: insert-user-roles
+      author: malphonse
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO user_role (user_id, role_id)
+              SELECT user_id, (SELECT role_id FROM roles WHERE role_key_name = 'member')  -- Default role: member
+              FROM users;
+              UPDATE user_role
+              SET role_id = (SELECT role_id FROM roles WHERE role_key_name = 'admin')
+              WHERE user_id = (SELECT user_id FROM users LIMIT 1);
+              UPDATE user_role
+              SET role_id = (SELECT role_id FROM roles WHERE role_key_name = 'manager')
+              WHERE user_id = (SELECT user_id FROM users OFFSET 1 LIMIT 1);
+  - changeSet:
+      id: create-donations-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: donations
+            columns:
+              - column:
+                  name: donation_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_donations_user_id
+                    references: users(user_id)
+              - column:
+                  name: amount
+                  type: numeric
+              - column:
+                  name: donation_date
+                  type: timestamptz
+                  defaultValueComputed: now()
+  - changeSet:
+      id: create-donations-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: donations_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: donation_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_donations_audit_donation_id
+                    references: donations(donation_id)
+              - column:
+                  name: user_id
+                  type: uuid
+              - column:
+                  name: amount
+                  type: numeric
+              - column:
+                  name: donation_date
+                  type: timestamptz
+              - column:
+                  name: audit_timestamp
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: audit_action
+                  type: varchar(255)
+              - column:
+                  name: audit_user
+                  type: varchar(255)
+  - changeSet:
+      id: insert-dummy-donations
+      author: malphonse
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              INSERT INTO donations (donation_id, user_id, amount)
+              SELECT
+                uuid_generate_v4(),
+                (SELECT user_id FROM users ORDER BY RANDOM() LIMIT 1),
+                (RANDOM() * 100)::numeric(10, 2)
+              FROM generate_series(1, 50);
+  - changeSet:
+      id: create-announcements-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: announcements
+            columns:
+              - column:
+                  name: announcement_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_announcements_user_id
+                    references: users(user_id)
+              - column:
+                  name: title
+                  type: varchar(255)
+              - column:
+                  name: content
+                  type: text
+              - column:
+                  name: announcement_date
+                  type: timestamptz
+                  defaultValueComputed: now()
+  - changeSet:
+      id: create-announcements-audit-table
+      author: malphonse
+      changes:
+        - createTable:
+            tableName: announcements_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: announcement_id
+                  type: uuid
+                  constraints:
+                    foreignKey: true
+                    foreignKeyName: fk_announcements_audit_announcement_id
+                    references: announcements(announcement_id)
+              - column:
+                  name: user_id
+                  type: uuid
+              - column:
+                  name: title
+                  type: varchar(255)
+              - column:
+                  name: content
+                  type: text
+              - column:
+                  name: announcement_date
+                  type: timestamptz
+              - column:
+                  name: audit_timestamp
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: audit_action
+                  type: varchar(255)
+              - column:
+                  name: audit_user
+                  type: varchar(255)
+  - changeSet:
+      id: insert-dummy-announcements-1
+      author: malphonse
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO announcements (announcement_id, user_id, title, content)
+              SELECT
+                uuid_generate_v4(),
+                (SELECT u.user_id FROM users u 
+                JOIN user_role ur ON u.user_id = ur.user_id 
+                JOIN roles r ON ur.role_id = r.role_id 
+                WHERE r.role_key_name IN ('admin', 'manager') 
+                ORDER BY RANDOM() LIMIT 1),
+                'Welcome',
+                'Welcome to our nonprofit portal!';
+    
+  - changeSet:
+      id: insert-dummy-announcements-2
+      author: malphonse
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO announcements (announcement_id, user_id, title, content)
+              SELECT
+                uuid_generate_v4(),
+                (SELECT u.user_id FROM users u 
+                 JOIN user_role ur ON u.user_id = ur.user_id 
+                 JOIN roles r ON ur.role_id = r.role_id 
+                 WHERE r.role_key_name IN ('admin', 'manager') 
+                 ORDER BY RANDOM() LIMIT 1),
+                'New Feature',
+                'We have added a new feature to our portal!';
+  
+  - changeSet:
+      id: insert-dummy-announcements-3
+      author: malphonse
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO announcements (announcement_id, user_id, title, content)
+              SELECT
+                uuid_generate_v4(),
+                (SELECT u.user_id FROM users u 
+                 JOIN user_role ur ON u.user_id = ur.user_id 
+                 JOIN roles r ON ur.role_id = r.role_id 
+                 WHERE r.role_key_name IN ('admin', 'manager') 
+                 ORDER BY RANDOM() LIMIT 1),
+                'Upcoming Event',
+                'Join us for our upcoming event!';
