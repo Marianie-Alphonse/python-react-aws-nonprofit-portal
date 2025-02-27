@@ -4,11 +4,12 @@
     flex-direction: column; /* Tabs on top, content below */
     min-height: 100vh; /* Ensure full viewport height */
     margin: 0; /* Remove default margins */
+    background-color: #ffffff; /* Add background color */
   }
   
   .tabs {
     display: flex;
-    justify-content: center; /* Center the tabs */
+    justify-content: right; /* Have tabs on right top side of the screen */
     border-bottom: 1px solid #ccc; /* Add a bottom border */
     padding: 10px;
   }
